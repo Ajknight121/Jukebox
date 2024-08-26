@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 export const Header = () => {
   const [showMenu, setShowMenu] = useState(false);
 
+  const user = null;
+
   return (
     <>
       <nav className="fixed z-10 px-4 flex items-center justify-between w-full h-24 font-black bg-neutral-950 text-white">
@@ -33,10 +35,25 @@ export const Header = () => {
         <h1 className="text-center text-xl md:text-4xl lg:w-1/2">
           ACM@UIC JUKEBOX
         </h1>
-        <div className=" flex flex-row-reverse items-center h-full lg:w-1/4">
-          <button className="h-1/2 aspect-square">
+        <div className="login flex flex-row-reverse items-center h-full lg:w-1/4">
+        {user ? (
+          <div className="profile">
+            <button className="avatar h-1/2 aspect-square">
+              <img src={user.result.imageUrl} alt={user.result.name} />
+              <div>{user.result.name}</div>
+            </button>
+            <button className="logout">
+              Logout
+            </button>
+          </div>
+        ) : (
+          <Link to="/auth">
+            Sign In
+          </Link>
+        )}
+          {/* <button className="h-1/2 aspect-square">
             <img src="src/images/ProfilePic.png" />
-          </button>
+          </button> */}
         </div>
       </nav>
       <MenuDropdown showMenu={showMenu} setShowMenu={setShowMenu} />

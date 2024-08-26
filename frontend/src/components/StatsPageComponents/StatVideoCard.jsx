@@ -10,7 +10,14 @@ export default function StatVideoCard({ video }) {
     .toISOString()
     .substring(14, 19);
 
-  const lastPlayedString = new Date(lastPlayed).toLocaleString();
+  const yearThreshold = new Date(2020, 0, 1); // January 1st of 2020
+  let lastPlayedString = ""
+  // Check if lastPlayed is older than the year 2000
+  if (new Date(lastPlayed) < yearThreshold) {
+    lastPlayedString = "Never";
+  } else {
+    lastPlayedString = new Date(lastPlayed).toLocaleString();
+  }
   const [showUrl, setShowUrl] = useState(false);
 
   function handleClick() {

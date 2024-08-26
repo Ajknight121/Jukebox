@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import Contributor from "./pages/Contributor";
 import StatsPage from "./pages/StatsPage";
 import { SongControl } from "./components/SongControl";
+import Auth from "./pages/Auth";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/contributors" element={<Contributor />} />
           <Route path="/stats" element={<StatsPage />} />
+          <Route path="/auth" element={<Auth />} />
         </Routes>
       </div>
       <SongControl />
