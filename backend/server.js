@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
 import { extractVideoId, getVideoDetails } from "./lib/VideoHelpers.js";
+import mongoose from "mongoose";
 
 //imports environment variables from .env or .env.local file
 dotenv.config({ path: ".env.local" });
@@ -17,9 +18,22 @@ const io = new Server(server, {
   },
 });
 
-//state for songs (can possibly be stored in a database)
+
+//state for songs
+const VideoSchema = mongoose.Schema({
+  id: String,
+  url: String,
+  title: String,
+  duration: Number,
+  plays: Number,
+  likes: Number,
+  lastPlayed: { type: Date, default: Date(0) } // Must use type: when multiple properties
+});
+
+// Create Model - A model is a class with which we construct documents.
+const VideoModel = mongoose.model('Video', VideoSchema);
+
 let queue = [];
-let storage = [];
 let currentVideo = null;
 let videoTimer = null;
 
@@ -38,14 +52,15 @@ app.use((req, res, next) => {
 });
 
 //function to update storage with plays and lastPlayed
-function updateStorage(videoId) {
-  const index = storage.findIndex((video) => video.id === videoId);
+async function updateStorage(videoId) {
+  console.log("UPDATE ENTRY")
 
-  if (index != -1) {
-    storage[index].plays++;
-    storage[index].lastPlayed = new Date();
-    io.emit("storageUpdated", { storage });
-  }
+  const searchFilter = { id: videoId}
+  const update = { $inc: {plays: 1}, $set: {lastPlayed: new Date()}} // Increment plays and set lastPlayed 
+  const res = await VideoModel.updateOne(searchFilter, update)
+
+  const storage = await VideoModel.find();
+  io.emit("storageUpdated", { storage });
 }
 
 //function to start video timer
@@ -98,8 +113,9 @@ function nextVideo() {
 }
 
 //endpoints for storage, queue, and currentVideo
-app.get("/songs/storage", (req, res) => {
-  return res.status(200).json(storage);
+app.get("/songs/storage", async (req, res) => {
+  const savedVideos = await VideoModel.find();
+  return res.status(200).json(savedVideos);
 });
 
 app.get("/songs/queue", (req, res) => {
@@ -121,8 +137,7 @@ app.post("/songs/url", async (req, res) => {
     return res.status(400).json({ error: "Invalid youtube url" });
   }
 
-  let video = storage.find((video) => video.id === videoId); //checks if video is already in storage
-
+  let video = await VideoModel.findOne({id: videoId})
   if (!video) {
     //if video is not in storage, get video details
     console.log("not found in storage");
@@ -144,8 +159,8 @@ app.post("/songs/url", async (req, res) => {
       likes: 0,
       lastPlayed: new Date(0),
     };
-    storage.push(video);
-    io.emit("storageUpdated", { storage });
+    const dbVideo = new VideoModel(video)
+    dbVideo.save()
   }
 
   //add video to queue if it is not the current video
@@ -191,7 +206,11 @@ io.on("connection", (socket) => {
   });
 });
 
-//Listen in PORT
-server.listen(process.env.PORT, () => {
-  console.log(`Server is running at port ${process.env.PORT}`);
-});
+
+// Connect to database then have server listen on PORT
+const DATABASE_URL = process.env.DATABASE_URL;
+mongoose.connect(DATABASE_URL, {})
+  .then(() => {
+    server.listen(process.env.PORT, () => console.log(`Server is running at port ${process.env.PORT}`))
+  })
+  .catch((error) => console.log(error.message));

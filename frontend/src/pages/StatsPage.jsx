@@ -27,7 +27,9 @@ export default function StatsPage() {
 
     socket.on("storageUpdated", ({ storage }) => {
       console.log("Storage updated", storage);
-      setStorage(storage);
+      if (storage) {
+        setStorage(storage);
+      }
     });
 
     return () => {
