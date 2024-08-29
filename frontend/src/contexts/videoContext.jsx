@@ -98,6 +98,27 @@ export function VideoContextProvider({ children }) {
     socket.emit("skipRequest");
   }
 
+  async function signin(formData, history) {
+    try {
+      // log in user
+
+      // Move to home page
+      history.push('/')
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  
+  async function signup(formData, history) {
+    try {
+      // sign up user
+
+      // Move to home page
+      history.push('/')
+    } catch (error) {
+      console.log(error)
+    }
+  }
   return (
     <videoContext.Provider
       value={{

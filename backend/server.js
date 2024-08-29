@@ -5,6 +5,7 @@ import http from "http";
 import { Server } from "socket.io";
 import { extractVideoId, getVideoDetails } from "./lib/VideoHelpers.js";
 import mongoose from "mongoose";
+import auth from "./middleware/auth.js";
 
 //imports environment variables from .env or .env.local file
 dotenv.config({ path: ".env.local" });
@@ -26,7 +27,10 @@ const VideoSchema = mongoose.Schema({
   title: String,
   duration: Number,
   plays: Number,
-  likes: Number,
+  likes: {
+    type: [String],
+    default: [],
+  },
   lastPlayed: { type: Date, default: Date(0) } // Must use type: when multiple properties
 });
 
@@ -127,7 +131,8 @@ app.get("/songs/current", (req, res) => {
 });
 
 //add song through url
-app.post("/songs/url", async (req, res) => {
+// runs auth middleware first, only signed in members can add to queue
+app.post("/songs/url", auth, async (req, res) => {
   //extracts video id from url
   const { url } = req.body;
   const videoId = extractVideoId(url);
