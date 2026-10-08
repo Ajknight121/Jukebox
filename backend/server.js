@@ -5,9 +5,15 @@ import http from "http";
 import { Server } from "socket.io";
 import { extractVideoId, getVideoDetails } from "./lib/VideoHelpers.js";
 import mongoose from "mongoose";
+import path from "path";
+import { fileURLToPath } from "url";
 
 //imports environment variables from .env or .env.local file
 dotenv.config({ path: ".env.local" });
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicRoot = path.join(__dirname, "../backend/public/dist");
 
 //creating express app and server
 const app = express();
@@ -31,11 +37,12 @@ const VideoSchema = mongoose.Schema({
 });
 
 // Create Model - A model is a class with which we construct documents.
-const VideoModel = mongoose.model('Video', VideoSchema);
+const VideoModel = mongoose.model('Video', VideoSchema, 'JukeboxVideo');
 
 let queue = [];
 let currentVideo = null;
 let videoTimer = null;
+let currentVideoStartTime = null;
 
 let skipCount = 0;
 const skipRequests = new Set();
@@ -51,7 +58,7 @@ app.use((req, res, next) => {
   next();
 });
 
-//function to update storage with plays and lastPlayed
+//function to increment plays and updated lastPlayed date
 async function updateStorage(videoId) {
   console.log("UPDATE ENTRY")
 
@@ -63,7 +70,7 @@ async function updateStorage(videoId) {
   io.emit("storageUpdated", { storage });
 }
 
-//function to start video timer
+//function to set timeout for current video
 function startVideoTimer() {
   if (videoTimer) {
     clearInterval(videoTimer); // Clear the previous timer if it exists
@@ -71,11 +78,12 @@ function startVideoTimer() {
 
   if (currentVideo) {
     console.log("Starting video timer for ", currentVideo.title);
+    currentVideoStartTime = Date.now();
 
     videoTimer = setTimeout(() => {
       // Set a new timer for the new current video
       nextVideo();
-    }, currentVideo.duration * 1000);
+    }, (currentVideo.duration + 1) * 1000);
   }
 }
 
@@ -108,6 +116,7 @@ function nextVideo() {
     }
 
     currentVideo = null;
+    currentVideoStartTime = null;
     io.emit("currentVideoChanged", { currentVideo });
   }
 }
@@ -123,7 +132,13 @@ app.get("/songs/queue", (req, res) => {
 });
 
 app.get("/songs/current", (req, res) => {
-  return res.status(200).json(currentVideo);
+  if (currentVideo) {
+    const elapsed = currentVideoStartTime ? (Date.now() - currentVideoStartTime) / 1000 : 0;
+    const responseData = JSON.parse(JSON.stringify(currentVideo));
+    responseData.progress = elapsed;
+    return res.status(200).json(responseData);
+  }
+  return res.status(200).json(null);
 });
 
 //add song through url
@@ -204,6 +219,13 @@ io.on("connection", (socket) => {
       console.log("No video to skip");
     }
   });
+});
+
+app.use(express.static(publicRoot));
+
+app.get("*", (req, res, next) => {
+  // Frontend client handles
+  return res.sendFile(path.join(publicRoot, "index.html"));
 });
 
 

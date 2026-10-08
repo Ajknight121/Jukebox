@@ -5,7 +5,8 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "build-serve": "npm run build --prefix ../frontend && node server.js"
   },
   "keywords": [],
   "author": "",
