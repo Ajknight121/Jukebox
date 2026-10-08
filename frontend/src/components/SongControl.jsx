@@ -78,7 +78,7 @@ export const SongControl = () => {
                 : "flex flex-row md:justify-end items-center space-x-4"
             }
           >
-            <img className="size-8 md:size-12" src="src/images/Like0.png" />
+            <img className="size-8 md:size-12" src={"src/images/Like0.png"} />
             <p className="flex">{currentVideo?.likes}</p>
           </div>
         </div>
