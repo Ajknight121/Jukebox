@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "build-serve": "npm run build --prefix ../frontend && node server.js"
+    "build-frontend": "npm run build --prefix ../frontend",
+    "build-serve": "npm run build --prefix ../frontend && node server.js",
+    "serve": "node server.js"
   },
   "keywords": [],
   "author": "",
